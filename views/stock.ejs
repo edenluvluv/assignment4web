@@ -1,11 +1,10 @@
-<!-- main.ejs -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bank</title>
-    <link rel="stylesheet" href="/styles.css">
+    <title>Stock Information</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,31 +12,37 @@
             padding: 0;
             background-color: #f4f4f4;
         }
+
         header {
             background-color: #333;
             color: #fff;
             padding: 20px;
             text-align: center;
         }
+
         nav ul {
             list-style-type: none;
             padding: 0;
         }
+
         nav ul li {
             display: inline;
             margin-right: 20px;
         }
+
         nav ul li a {
             text-decoration: none;
             color: #fff;
             font-weight: bold;
         }
+
         .hero {
             background-color: #007bff;
             color: #fff;
             padding: 50px 20px;
             text-align: center;
         }
+
         .features {
             background-color: #fff;
             padding: 20px;
@@ -45,6 +50,7 @@
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         footer {
             background-color: #333;
             color: #fff;
@@ -54,8 +60,36 @@
             bottom: 0;
             width: 100%;
         }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stock-form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stock-info {
+            text-align: center;
+        }
+
+        .stock-info p {
+            margin: 10px 0;
+        }
     </style>
 </head>
+
 <body>
     <header>
         <h1>Bank</h1>
@@ -65,18 +99,44 @@
                 <li><a href="/login">Log Out</a></li>
                 <li><a href="/convertion">Convert your money</a></li>
                 <li><a href="/stock">Stock</a></li>
-                <li><a href="/worldbank">World Bank</a></li>
                 <li><a href="/bonus">bonus</a></li>
             </ul>
         </nav>
     </header>
-    
     <main>
-       
-    </main>
+        <div class="container">
+            <h1>Stock Information</h1>
+            <div class="stock-form">
+                <form action="/stock" method="post">
+                    <label for="symbol">Enter Stock Symbol:</label>
+                    <input type="text" id="symbol" name="symbol" required>
+                    <button type="submit">Get Stock Information</button>
+                </form>
+            </div>
+            <div class="stock-info">
+                <% if (error) { %>
+                    <div class="error">
+                        <p>
+                            <%= error %>
+                        </p>
+                    </div>
+                    <% } else if (symbol) { %>
+                        <div class="result">
+                            <p>Symbol: <%= symbol %>
+                            </p>
+                            <p>Price: <%= price %>
+                            </p>
+                            <p>Change Percent: <%= changePercent %>
+                            </p>
+                        </div>
+                        <% } %>
+            </div>
 
+        </div>
+    </main>
     <footer>
         <p>Bayazitova Kamila || SE-2206</p>
     </footer>
 </body>
+
 </html>

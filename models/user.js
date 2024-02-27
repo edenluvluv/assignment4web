@@ -28,4 +28,6 @@ const User = mongoose.model('users', {
     deletedAt: { type: Date, default: null }
 });
 
+
+
 module.exports = User
