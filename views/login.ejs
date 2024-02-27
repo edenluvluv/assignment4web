@@ -84,5 +84,14 @@
         </form>
         <p>Don't have an account? <a href="/register">Register</a></p>
     </div>
+    
+    <% if (message) { %>
+        <script>
+            window.onload = function() {
+                alert("<%= message %>");
+            };
+        </script>
+    <% } %>
 </body>
+
 </html>

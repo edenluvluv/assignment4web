@@ -11,13 +11,24 @@ const axios = require('axios');
 const app = express();
 const port = 3000;
 const History = require('./models/history');
-const Card = require('./models/card');
+// const Card = require('./models/card');
 
 app.use(session({
     secret: 'key',
     resave: false,
     saveUninitialized: true
 }));
+
+app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Error destroying session:', err);
+            res.status(500).send('Internal Server Error');
+        } else {
+            res.redirect('/login'); // Redirect to the login page after logout
+        }
+    });
+});
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -26,41 +37,35 @@ app.use(bodyParser.json());
 app.get('/', (req, res) => {
     res.redirect('/login');
 });
-app.get('/convertion', (req, res) => {
-    // Provide default data for rendering the "convertion" template
+app.get('/convertion', requireAuth, (req, res) => {
     const defaultData = {
-        from: 'USD',    // Default currency to convert from
-        to: 'EUR',      // Default currency to convert to
-        amount: 100     // Default amount
+        from: 'USD',    
+        to: 'EUR',    
+        amount: 100   
     };
-
-    // Render the "convertion" template and pass the default data
     res.render('convertion', { conversionResult: null, ...defaultData });
 });
 
 app.get('/login', (req, res) => {
-    res.render('login');
+    res.render('login', { message: req.session.message }); // Pass the message variable to the template
 });
+
 
 app.get('/register', (req, res) => {
     res.render('register');
 });
 
-app.get('/main', (req, res) => {
+app.get('/main', requireAuth, (req, res) => {
     res.render('main');
 });
 
-app.get('/admin', isAdmin, (req, res) => {
+app.get('/admin', requireAuth, isAdmin, (req, res) => {
     res.render('admin');
 });
 
-app.get('/admincards', isAdmin, (req, res) => {
-    res.render('admincards'); // Render the admincards.ejs file
-});
-
-// Assuming you have express app set up
-
-
+// app.get('/admincards', isAdmin, (req, res) => {
+//     res.render('admincards'); 
+// });
 
 app.get('/random-user', async (req, res) => {
     try {
@@ -76,7 +81,7 @@ app.get('/random-user', async (req, res) => {
     }
 });
 
-app.get('/history', async (req, res) => {
+app.get('/history', isAdmin,async (req, res) => {
     try {
         const history = await History.find().sort({ timestamp: -1 }).limit(10); // Example: Fetch last 10 history records
         res.render('history', { history });
@@ -85,6 +90,15 @@ app.get('/history', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
+
+function requireAuth(req, res, next) {
+    if (req.session.username) { // Check if session username exists
+        next(); // User is authenticated, continue to the next middleware or route handler
+    } else {
+        res.render('login', { message: 'You need to log in first' }); // Render login page with a message
+    }
+}
+
 
 
 async function isAdmin(req, res, next) {
@@ -139,45 +153,39 @@ function generateUserID() {
 
 
 const alphaVantageApiKey = 'W2KWU488AIVMCQFQ';
-app.all('/stock', async (req, res) => {
+app.all('/stock', requireAuth,async (req, res) => {
+    const isAuthenticated = req.session.username ? true : false;
     if (req.method === 'GET') {
-        // Render the stock template with default values
+        const isAuthenticated = req.session.username ? true : false;
         res.render('stock', { symbol: 'AAPL', price: 150.25, changePercent: '+2.5%', error: null, conversionResult: null });
     } else if (req.method === 'POST') {
-        // Retrieve the stock symbol from the request body
         const symbol = req.body.symbol;
-        // Construct the API URL for AlphaVantage
         const apiUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${alphaVantageApiKey}`;
 
         try {
-            // Fetch data from the AlphaVantage API
             const response = await fetch(apiUrl);
             const data = await response.json();
-
-            // Check if data for the symbol is found
             if (data["Global Quote"]) {
-                // Extract relevant information from the API response
                 const { "01. symbol": symbol, "05. price": price, "10. change percent": changePercent } = data["Global Quote"];
-                // Render the stock template with retrieved data
+                const isAuthenticated = req.session.username ? true : false;
                 res.render('stock', { symbol, price, changePercent, error: null, conversionResult: null });
             } else {
-                // If symbol is not found, send a 404 response
+                const isAuthenticated = req.session.username ? true : false;
                 res.status(404).render('stock', { symbol: null, price: null, changePercent: null, error: 'Stock symbol not found', conversionResult: null });
             }
         } catch (error) {
-            // If there's an error fetching data, send a 500 response
             console.error('Error fetching stock data:', error);
+            const isAuthenticated = req.session.username ? true : false;
             res.status(500).render('stock', { symbol: null, price: null, changePercent: null, error: 'Internal Server Error', conversionResult: null });
         }
     } else {
-        // If request method is not GET or POST, send a 405 response
         res.status(405).send('Method Not Allowed');
     }
 });
 
 
 async function fetchConversionRate(from, to) {
-    const API_KEY = 'e38b207477704e9d980b04dd8d1e2fb4'; // Replace 'YOUR_API_KEY' with your actual API key
+    const API_KEY = 'e38b207477704e9d980b04dd8d1e2fb4'; 
     const apiUrl = `https://open.er-api.com/v6/latest/${from}`;
 
     const response = await axios.get(apiUrl, {
@@ -195,8 +203,6 @@ async function fetchConversionRate(from, to) {
     return conversionRate;
 }
 
-
-// Function to convert currency using fetched conversion rates
 async function convertCurrency(from, to, amount) {
     try {
         const rate = await fetchConversionRate(from, to);
@@ -207,7 +213,7 @@ async function convertCurrency(from, to, amount) {
     }
 }
 
-// Update the /convert-currency route to handle form submission
+
 app.post('/convert-currency', async (req, res) => {
     try {
         const { from, to, amount } = req.body;
@@ -218,114 +224,112 @@ app.post('/convert-currency', async (req, res) => {
             amount,
             convertedAmount
         };
-        // Render the "convertion" template with conversionResult and error variables
+        const isAuthenticated = req.session.username ? true : false;
         res.render('convertion', { conversionResult, error: null });
     } catch (error) {
-        // If an error occurs during conversion, render the template with error message
         res.render('convertion', { conversionResult: null, error: error.message });
     }
 });
 
 
-// Create a new card
-app.post('/admin/cards', isAdmin, async (req, res) => {
-    const { nameEn, nameOther, descriptionEn, descriptionOther, image1, image2, image3 } = req.body;
-    try {
-        const card = await card.create({
-            name: { en: nameEn, other: nameOther },
-            description: { en: descriptionEn, other: descriptionOther },
-            images: [image1, image2, image3],
-            createdAt: new Date(),
-            updatedAt: new Date()
-        });
-        res.redirect('/admin/cards');
-    } catch (error) {
-        console.error('Error creating card:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
+// // Create a new card
+// app.post('/admin/cards', isAdmin, async (req, res) => {
+//     const { nameEn, nameOther, descriptionEn, descriptionOther, image1, image2, image3 } = req.body;
+//     try {
+//         const card = await card.create({
+//             name: { en: nameEn, other: nameOther },
+//             description: { en: descriptionEn, other: descriptionOther },
+//             images: [image1, image2, image3],
+//             createdAt: new Date(),
+//             updatedAt: new Date()
+//         });
+//         res.redirect('/admin/cards');
+//     } catch (error) {
+//         console.error('Error creating card:', error);
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
 
-// Create a new card
-app.post('/admin/create-card', isAdmin, async (req, res) => {
-    // Extract card data from the request body
-    const { nameEn, nameOther, descriptionEn, descriptionOther, image1, image2, image3 } = req.body;
+// // Create a new card
+// app.post('/admin/create-card', isAdmin, async (req, res) => {
+//     // Extract card data from the request body
+//     const { nameEn, nameOther, descriptionEn, descriptionOther, image1, image2, image3 } = req.body;
 
-    try {
-        // Create a new card in the database
-        const card = await Card.create({
-            name: { en: nameEn, other: nameOther },
-            description: { en: descriptionEn, other: descriptionOther },
-            images: [image1, image2, image3], // Saving URLs directly
-            createdAt: new Date(),
-            updatedAt: new Date()
-        });
+//     try {
+//         // Create a new card in the database
+//         const card = await Card.create({
+//             name: { en: nameEn, other: nameOther },
+//             description: { en: descriptionEn, other: descriptionOther },
+//             images: [image1, image2, image3], // Saving URLs directly
+//             createdAt: new Date(),
+//             updatedAt: new Date()
+//         });
 
-        // Redirect the user to a confirmation page or any other appropriate page
-        res.redirect('/admin/cards');
-    } catch (error) {
-        // Handle errors if card creation fails
-        console.error('Error creating card:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
+//         // Redirect the user to a confirmation page or any other appropriate page
+//         res.redirect('/admin/cards');
+//     } catch (error) {
+//         // Handle errors if card creation fails
+//         console.error('Error creating card:', error);
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
 
 
 
-// Get a specific card
-app.get('/admin/cards/:id', isAdmin, async (req, res) => {
-    const { id } = req.params;
-    try {
-        const card = await Card.findById(id);
-        if (!card) {
-            return res.status(404).send('Card not found');
-        }
-        res.json(card);
-    } catch (error) {
-        console.error('Error fetching card:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
+// // Get a specific card
+// app.get('/admin/cards/:id', isAdmin, async (req, res) => {
+//     const { id } = req.params;
+//     try {
+//         const card = await Card.findById(id);
+//         if (!card) {
+//             return res.status(404).send('Card not found');
+//         }
+//         res.json(card);
+//     } catch (error) {
+//         console.error('Error fetching card:', error);
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
 
-// Update an existing card
-app.put('/admin/cards/:id', isAdmin, async (req, res) => {
-    const { id } = req.params;
-    const { nameEn, nameOther, descriptionEn, descriptionOther } = req.body;
-    try {
-        const card = await Card.findByIdAndUpdate(id, {
-            name: { en: nameEn, other: nameOther },
-            description: { en: descriptionEn, other: descriptionOther },
-            updatedAt: new Date()
-        });
-        if (!card) {
-            return res.status(404).send('Card not found');
-        }
-        res.redirect('/admin/cards');
-    } catch (error) {
-        console.error('Error updating card:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
+// // Update an existing card
+// app.put('/admin/cards/:id', isAdmin, async (req, res) => {
+//     const { id } = req.params;
+//     const { nameEn, nameOther, descriptionEn, descriptionOther } = req.body;
+//     try {
+//         const card = await Card.findByIdAndUpdate(id, {
+//             name: { en: nameEn, other: nameOther },
+//             description: { en: descriptionEn, other: descriptionOther },
+//             updatedAt: new Date()
+//         });
+//         if (!card) {
+//             return res.status(404).send('Card not found');
+//         }
+//         res.redirect('/admin/cards');
+//     } catch (error) {
+//         console.error('Error updating card:', error);
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
 
-// Delete an existing card
-app.delete('/admin/cards/:id', isAdmin, async (req, res) => {
-    const { id } = req.params;
-    try {
-        const card = await Card.findByIdAndDelete(id);
-        if (!card) {
-            return res.status(404).send('Card not found');
-        }
-        res.redirect('/admin/cards');
-    } catch (error) {
-        console.error('Error deleting card:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
+// // Delete an existing card
+// app.delete('/admin/cards/:id', isAdmin, async (req, res) => {
+//     const { id } = req.params;
+//     try {
+//         const card = await Card.findByIdAndDelete(id);
+//         if (!card) {
+//             return res.status(404).send('Card not found');
+//         }
+//         res.redirect('/admin/cards');
+//     } catch (error) {
+//         console.error('Error deleting card:', error);
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
 
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // Check if the username already exists
         const existingUser = await User.findOne({ username: username });
         if (existingUser) {
             res.render('success', { message: 'User already exists', link: '/register' });
@@ -361,8 +365,6 @@ app.post('/login', async (req, res) => {
         if (!user) {
             return res.status(404).send('Invalid username or password');
         }
-
-        // Compare the hashed password stored in the database with the password entered by the user
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return res.status(404).send('Invalid username or password');
@@ -394,7 +396,6 @@ app.post('/admin/create-user', isAdmin, async (req, res) => {
         else{
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Create the user
             const user = await User.create({
               username: username,
               password: hashedPassword,
@@ -419,26 +420,20 @@ app.post('/admin/create-user', isAdmin, async (req, res) => {
     const { oldUsername, newUsername, newPassword } = req.body;
   
     try {
-        // Find the user by old username
         const user = await User.findOne({ username: oldUsername });
     
         if (!user) {
           return res.status(404).send('User not found');
         }
-    
-        // Hash the new password if provided
-        let hashedPassword = user.password; // Keep the old hashed password by default
+        let hashedPassword = user.password; 
         if (newPassword) {
           hashedPassword = await bcrypt.hash(newPassword, 10);
         }
     
-        // Update the user information
-        user.username = newUsername || user.username; // Keep the old username if new one is not provided
+        user.username = newUsername || user.username; 
         user.password = hashedPassword;
     
         await user.save();
-    
-        // Respond with success
         res.status(200).send('User edited successfully');
     } catch (error) {
       console.error('User edit error:', error);
