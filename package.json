@@ -13,6 +13,9 @@
     "axios": "^1.6.7",
     "bcrypt": "^5.1.1",
     "express": "^4.18.2",
-    "mongoose": "^8.2.0"
+    "fetch": "^1.1.0",
+    "mongoose": "^8.2.0",
+    "request": "^2.88.2",
+    "session": "^0.1.0"
   }
 }
