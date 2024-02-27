@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,15 +15,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-    }
-
-    .container {
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      width: 600px;
-      text-align: center;
+      flex-direction: column;
     }
 
     h1 {
@@ -67,31 +60,94 @@
     a:hover {
       text-decoration: underline;
     }
+
     .separator {
       color: darkred;
-      font-size: 20px; 
-      margin: 0 10px; 
+      font-size: 20px;
+      margin: 0 10px;
     }
+
     .action-links {
       display: flex;
       align-items: center;
       justify-content: center;
       margin-top: 20px;
       color: darkred;
-      font-size: 24px; 
+      font-size: 24px;
     }
+
     .action-links a {
-      text-decoration: none; 
+      text-decoration: none;
       color: darkred;
-      margin: 0 10px; 
+      margin: 0 10px;
       font-weight: bold;
       font-size: 25px;
     }
+
     .action-links a:hover {
-      text-decoration: underline; 
+      text-decoration: underline;
+    }
+
+    .container,
+    .table-container {
+      border-radius: 8px;
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      text-align: center;
+      display: block; /* Changed to block */
+    }
+
+    .table-container {
+      margin-top: 20px; /* Adjust margin as needed */
+    }
+
+    .table-container h2 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .table-container table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table-container th,
+    .table-container td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    .table-container th {
+      background-color: #f2f2f2;
+    }
+
+    .table-container tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <nav class="action-links">
@@ -120,5 +176,33 @@
       <button type="submit">Delete User</button>
     </form>
   </div>
+  <div class="table-container">
+    <h2>Users:</h2>
+    <table>
+        <tr>
+            <th>Username</th>
+            <th>Password</th>
+            <th>isAdmin</th>
+            <th>Role</th>
+            <th>Created At</th>
+            <th>Updated At</th>
+            <th>User ID</th>
+            <th>Deleted At</th>
+        </tr>
+        <% users.forEach(user => { %>
+            <tr>
+                <td><%= user.username %></td>
+                <td><%= user.password %></td>
+                <td><%= user.isAdmin %></td>
+                <td><%= user.role %></td>
+                <td><%= user.createdAt %></td>
+                <td><%= user.updatedAt %></td>
+                <td><%= user.userID %></td>
+                <td><%= user.deletedAt ? user.deletedAt : 'Not Deleted' %></td>
+            </tr>
+        <% }); %>
+    </table>
+  </div>
 </body>
+
 </html>

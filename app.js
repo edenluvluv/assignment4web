@@ -61,10 +61,17 @@ app.get('/main', requireAuth, (req, res) => {
     res.render('main');
 });
 
-app.get('/admin', requireAuth, isAdmin, (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
-    res.render('admin');
+app.get('/admin', requireAuth, isAdmin, async (req, res) => {
+    try {
+        const users = await User.find(); // Fetch all users
+        res.setHeader('Cache-Control', 'no-store');
+        res.render('admin', { users }); // Pass users to the admin template
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
+
 
 // app.get('/admincards', isAdmin, (req, res) => {
 //     res.render('admincards'); 
