@@ -85,7 +85,6 @@ app.get('/random-user', async (req, res) => {
 });
 
 app.get('/history', requireAuth,  isAdmin,async (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
     try {
         const history = await History.find().sort({ timestamp: -1 }).limit(10); // Example: Fetch last 10 history records
         res.render('history', { history });
