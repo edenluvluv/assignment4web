@@ -43,6 +43,7 @@ app.get('/convertion', requireAuth, (req, res) => {
         to: 'EUR',    
         amount: 100   
     };
+    res.setHeader('Cache-Control', 'no-store');
     res.render('convertion', { conversionResult: null, ...defaultData });
 });
 
@@ -56,10 +57,12 @@ app.get('/register', (req, res) => {
 });
 
 app.get('/main', requireAuth, (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     res.render('main');
 });
 
 app.get('/admin', requireAuth, isAdmin, (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     res.render('admin');
 });
 
@@ -81,7 +84,8 @@ app.get('/random-user', async (req, res) => {
     }
 });
 
-app.get('/history', isAdmin,async (req, res) => {
+app.get('/history', requireAuth,  isAdmin,async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     try {
         const history = await History.find().sort({ timestamp: -1 }).limit(10); // Example: Fetch last 10 history records
         res.render('history', { history });
@@ -156,6 +160,7 @@ const alphaVantageApiKey = 'W2KWU488AIVMCQFQ';
 app.all('/stock', requireAuth,async (req, res) => {
     const isAuthenticated = req.session.username ? true : false;
     if (req.method === 'GET') {
+        res.setHeader('Cache-Control', 'no-store');
         const isAuthenticated = req.session.username ? true : false;
         res.render('stock', { symbol: 'AAPL', price: 150.25, changePercent: '+2.5%', error: null, conversionResult: null });
     } else if (req.method === 'POST') {
