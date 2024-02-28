@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            justify-content: center; 
+            align-items: center;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin-right: 20px;
+        }
+        nav ul li a {
+            text-decoration: none;
+            color: #fff;
+            font-weight: bold;
+        }
+        footer {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .result-container {
+            margin-top: 20px;
+        }
+        .result {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        .result h2 {
+            margin-top: 0;
+        }
+        .result a {
+            color: #333;
+            text-decoration: none;
+        }
+        .result a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bank</h1>
+        <nav>
+            <ul>
+                <li><a href="/main">Home</a></li>
+                <li><a href="/logout">Log Out</a></li>
+                <li><a href="/convertion">Convert your money</a></li>
+                <li><a href="/stock">Stock</a></li>
+                <li><a href="/search">Search unknown info here</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="container">
+        <h1 class="mt-4">Search Results</h1>
+        <div class="result-container">
+            <!-- Form for user input -->
+            <form action="/search" method="GET">
+                <div class="form-group">
+                    <label for="query">Enter your query:</label>
+                    <input type="text" class="form-control" id="query" name="query" placeholder="Enter your query" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+            
+            <!-- Display search results -->
+            <% if (error) { %>
+                <div class="alert alert-danger" role="alert">
+                    <%= error %>
+                </div>
+            <% } else { %>
+                <% if (results.length === 0) { %>
+                    <div class="alert alert-info" role="alert">
+                        No results found for '<%= query %>'
+                    </div>
+                <% } else { %>
+                    <% results.forEach(result => { %>
+                        <div class="result">
+                            <h2><a href="https://en.wikipedia.org/wiki/<%= encodeURIComponent(result.title) %>"><%- result.title %></a></h2>
+                            <p><%- result.snippet %></p>
+                        </div>
+                    <% }); %>
+                <% } %>
+            <% } %>
+        </div>
+    </div>
+    <footer>
+        <p>Bayazitova Kamila || SE-2206</p>
+    </footer>
+</body>
+</html>

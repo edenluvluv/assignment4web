@@ -19,13 +19,37 @@ app.use(session({
     saveUninitialized: true
 }));
 
+app.get('/search', requireAuth, async (req, res) => {
+    const { query } = req.query;
+
+    if (!query) {
+        res.render('search', { results: [], error: 'No query provided' });
+        return;
+    }
+
+    try {
+        const wikipediaUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&srsearch=${encodeURIComponent(query)}`;
+
+        const response = await fetch(wikipediaUrl);
+        const data = await response.json();
+
+        const results = data.query.search;
+        res.setHeader('Content-Type', 'text/html');
+        
+        res.render('search', { results, error: null });
+    } catch (error) {
+        console.error('Error fetching search results:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             console.error('Error destroying session:', err);
             res.status(500).send('Internal Server Error');
         } else {
-            res.redirect('/login'); // Redirect to the login page after logout
+            res.redirect('/login'); 
         }
     });
 });
@@ -48,7 +72,7 @@ app.get('/convertion', requireAuth, (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    res.render('login', { message: req.session.message }); // Pass the message variable to the template
+    res.render('login', { message: req.session.message }); 
 });
 
 
@@ -58,10 +82,7 @@ app.get('/register', (req, res) => {
 
 app.get('/main', requireAuth, async (req, res) => {
     try {
-        // Fetch card data from the database
-        const cards = await Card.find().lean(); // Assuming you're using Mongoose
-
-        // Render the 'main' template and pass the fetched card data
+        const cards = await Card.find().lean(); 
         res.render('main', { cards });
     } catch (error) {
         console.error('Error fetching card data:', error);
@@ -72,9 +93,9 @@ app.get('/main', requireAuth, async (req, res) => {
 
 app.get('/admin', requireAuth, isAdmin, async (req, res) => {
     try {
-        const users = await User.find(); // Fetch all users
+        const users = await User.find(); 
         res.setHeader('Cache-Control', 'no-store');
-        res.render('admin', { users }); // Pass users to the admin template
+        res.render('admin', { users });
     } catch (error) {
         console.error('Error fetching users:', error);
         res.status(500).send('Internal Server Error');
@@ -108,7 +129,7 @@ app.get('/random-user', async (req, res) => {
 
 app.get('/history', requireAuth, isAdmin, async (req, res) => {
     try {
-        const history = await History.find().sort({ timestamp: -1 }).limit(10); // Example: Fetch last 10 history records
+        const history = await History.find().sort({ timestamp: -1 }).limit(10); 
         res.render('history', { history });
     } catch (error) {
         console.error('Error fetching history:', error);
@@ -393,24 +414,20 @@ app.post('/admin/delete-user', isAdmin, async (req, res) => {
     }
 });
 
-// Create a new card
 app.post('/admin/create-card', isAdmin, async (req, res) => {
-    // Extract card data from the request body
     const { nameEn, nameOther, descriptionEn, descriptionOther, image1, image2, image3 } = req.body;
 
     try {
-        // Create a new card in the database
         const card = await Card.create({
             name: { en: nameEn, other: nameOther },
             description: { en: descriptionEn, other: descriptionOther },
-            images: [image1, image2, image3], // Saving URLs directly
+            images: [image1, image2, image3], 
             createdAt: new Date(),
             updatedAt: new Date()
         });
         await card.save();
         return res.status(404).send('Card created successfully');
     } catch (error) {
-        // Handle errors if card creation fails
         console.error('Error creating card:', error);
         res.status(500).send('Internal Server Error');
     }
@@ -425,7 +442,7 @@ app.post('/admin/cards/:id', isAdmin, async (req, res) => {
         const card = await Card.findByIdAndUpdate(id, {
             name: { en: nameEn, other: nameOther },
             description: { en: descriptionEn, other: descriptionOther },
-            images: [image1, image2, image3], // Saving URLs directly
+            images: [image1, image2, image3], 
             createdAt: new Date(),
             updatedAt: new Date()
         });
