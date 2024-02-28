@@ -11,7 +11,7 @@ const axios = require('axios');
 const app = express();
 const port = 3000;
 const History = require('./models/history');
-// const Card = require('./models/card');
+const Card = require('./models/card');
 
 app.use(session({
     secret: 'key',
@@ -56,10 +56,19 @@ app.get('/register', (req, res) => {
     res.render('register');
 });
 
-app.get('/main', requireAuth, (req, res) => {
-    res.setHeader('Cache-Control', 'no-store');
-    res.render('main');
+app.get('/main', requireAuth, async (req, res) => {
+    try {
+        // Fetch card data from the database
+        const cards = await Card.find().lean(); // Assuming you're using Mongoose
+
+        // Render the 'main' template and pass the fetched card data
+        res.render('main', { cards });
+    } catch (error) {
+        console.error('Error fetching card data:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
+
 
 app.get('/admin', requireAuth, isAdmin, async (req, res) => {
     try {
@@ -73,10 +82,15 @@ app.get('/admin', requireAuth, isAdmin, async (req, res) => {
 });
 
 
-// app.get('/admincards', isAdmin, (req, res) => {
-//     res.render('admincards'); 
-// });
-
+app.get('/admincards', requireAuth, isAdmin, async (req, res) => {
+    try {
+        res.setHeader('Cache-Control', 'no-store');
+        res.render('admincards'); 
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
 app.get('/random-user', async (req, res) => {
     try {
         const randomUserApiUrl = 'https://randomuser.me/api/';
@@ -102,10 +116,10 @@ app.get('/history', requireAuth,  isAdmin,async (req, res) => {
 });
 
 function requireAuth(req, res, next) {
-    if (req.session.username) { // Check if session username exists
-        next(); // User is authenticated, continue to the next middleware or route handler
+    if (req.session.username) { 
+        next(); 
     } else {
-        res.render('login', { message: 'You need to log in first' }); // Render login page with a message
+        res.render('login', { message: 'You need to log in first' }); 
     }
 }
 
@@ -243,100 +257,6 @@ app.post('/convert-currency', async (req, res) => {
 });
 
 
-// // Create a new card
-// app.post('/admin/cards', isAdmin, async (req, res) => {
-//     const { nameEn, nameOther, descriptionEn, descriptionOther, image1, image2, image3 } = req.body;
-//     try {
-//         const card = await card.create({
-//             name: { en: nameEn, other: nameOther },
-//             description: { en: descriptionEn, other: descriptionOther },
-//             images: [image1, image2, image3],
-//             createdAt: new Date(),
-//             updatedAt: new Date()
-//         });
-//         res.redirect('/admin/cards');
-//     } catch (error) {
-//         console.error('Error creating card:', error);
-//         res.status(500).send('Internal Server Error');
-//     }
-// });
-
-// // Create a new card
-// app.post('/admin/create-card', isAdmin, async (req, res) => {
-//     // Extract card data from the request body
-//     const { nameEn, nameOther, descriptionEn, descriptionOther, image1, image2, image3 } = req.body;
-
-//     try {
-//         // Create a new card in the database
-//         const card = await Card.create({
-//             name: { en: nameEn, other: nameOther },
-//             description: { en: descriptionEn, other: descriptionOther },
-//             images: [image1, image2, image3], // Saving URLs directly
-//             createdAt: new Date(),
-//             updatedAt: new Date()
-//         });
-
-//         // Redirect the user to a confirmation page or any other appropriate page
-//         res.redirect('/admin/cards');
-//     } catch (error) {
-//         // Handle errors if card creation fails
-//         console.error('Error creating card:', error);
-//         res.status(500).send('Internal Server Error');
-//     }
-// });
-
-
-
-// // Get a specific card
-// app.get('/admin/cards/:id', isAdmin, async (req, res) => {
-//     const { id } = req.params;
-//     try {
-//         const card = await Card.findById(id);
-//         if (!card) {
-//             return res.status(404).send('Card not found');
-//         }
-//         res.json(card);
-//     } catch (error) {
-//         console.error('Error fetching card:', error);
-//         res.status(500).send('Internal Server Error');
-//     }
-// });
-
-// // Update an existing card
-// app.put('/admin/cards/:id', isAdmin, async (req, res) => {
-//     const { id } = req.params;
-//     const { nameEn, nameOther, descriptionEn, descriptionOther } = req.body;
-//     try {
-//         const card = await Card.findByIdAndUpdate(id, {
-//             name: { en: nameEn, other: nameOther },
-//             description: { en: descriptionEn, other: descriptionOther },
-//             updatedAt: new Date()
-//         });
-//         if (!card) {
-//             return res.status(404).send('Card not found');
-//         }
-//         res.redirect('/admin/cards');
-//     } catch (error) {
-//         console.error('Error updating card:', error);
-//         res.status(500).send('Internal Server Error');
-//     }
-// });
-
-// // Delete an existing card
-// app.delete('/admin/cards/:id', isAdmin, async (req, res) => {
-//     const { id } = req.params;
-//     try {
-//         const card = await Card.findByIdAndDelete(id);
-//         if (!card) {
-//             return res.status(404).send('Card not found');
-//         }
-//         res.redirect('/admin/cards');
-//     } catch (error) {
-//         console.error('Error deleting card:', error);
-//         res.status(500).send('Internal Server Error');
-//     }
-// });
-
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
 
@@ -471,6 +391,45 @@ app.post('/admin/create-user', isAdmin, async (req, res) => {
       return res.status(500).send('Internal Server Error');
     }
   });
+
+// Create a new card
+app.post('/admin/create-card', isAdmin, async (req, res) => {
+    // Extract card data from the request body
+    const { nameEn, nameOther, descriptionEn, descriptionOther, image1, image2, image3 } = req.body;
+
+    try {
+        // Create a new card in the database
+        const card = await Card.create({
+            name: { en: nameEn, other: nameOther },
+            description: { en: descriptionEn, other: descriptionOther },
+            images: [image1, image2, image3], // Saving URLs directly
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+        await card.save(); 
+        return res.status(404).send('Card created successfully');
+    } catch (error) {
+        // Handle errors if card creation fails
+        console.error('Error creating card:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
+app.get('/admin/cards/:id', isAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const card = await Card.findById(id);
+        if (!card) {
+            return res.status(404).send('Card not found');
+        }
+        res.json(card);
+    } catch (error) {
+        console.error('Error fetching card:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
