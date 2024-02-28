@@ -40,7 +40,16 @@ Run the application
 
 - Admin users have access to an admin panel.
 - Admins can manage users, including creating, editing, and deleting users.
+- Admins can create,editing and deleting credit cards that will be shown on main page for users.
 - Admins can view the system's history and perform administrative tasks.
+
+### Stock information
+
+- Users can get an info about selected stock symbols.
+
+### Help with username
+
+- If user is struggling with getting an username on register page, they can get  help from random-user api by clicking "Struggling with name?" button.
 
 ### Error Handling:
 
@@ -52,6 +61,7 @@ Run the application
 - `/register`: User registration page.
 - `/main`: Main page accessible after login.
 - `/admin`: Admin panel.
+- `/admincards`: Admin panel for managinf credit cards.
 - `/logout`: Logout route.
 - `/convertion`: Route for currency conversion.
 - `/history`: Route to view system history.
