@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Search Results</title>
-    <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -80,7 +79,6 @@
     <div class="container">
         <h1 class="mt-4">Search Results</h1>
         <div class="result-container">
-            <!-- Form for user input -->
             <form action="/search" method="GET">
                 <div class="form-group">
                     <label for="query">Enter your query:</label>
@@ -88,8 +86,6 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Search</button>
             </form>
-            
-            <!-- Display search results -->
             <% if (error) { %>
                 <div class="alert alert-danger" role="alert">
                     <%= error %>
