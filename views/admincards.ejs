@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Cards</title>
     <link rel="stylesheet" href="/styles.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -84,6 +88,37 @@
             background-color: #45a049;
         }
 
+
+        .features {
+            background-color: #fff;
+            width: 1000px;
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .carousel {
+            max-width: 500px;
+            /* Adjust maximum width */
+            margin: 0 auto;
+            /* Center the carousel */
+        }
+
+        .carousel-inner {
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: 300px;
+            /* Adjust height as needed */
+            object-fit: cover;
+            /* Maintain aspect ratio */
+        }
+
         footer {
             background-color: #333;
             color: #fff;
@@ -128,9 +163,90 @@
         </form>
     </main>
 
+    <section>
+        <% if (cards && cards.length) { %>
+            <% cards.forEach(card=> { %>
+                <div class="features">
+                    <h2>
+                        <%= card.name.en %>
+                    </h2>
+                    <p>
+                        <%= card.description.en %>
+                    </p>
+                    <div id="carousel<%= card._id %>" class="carousel slide" data-ride="carousel">
+                        <div class="carousel-inner">
+                            <% card.images.forEach((image, index)=> { %>
+                                <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                                    <img src="<%= image %>" class="d-block w-100" alt="...">
+                                </div>
+                                <% }) %>
+                        </div>
+                        <a class="carousel-control-prev" href="#carousel<%= card._id %>" role="button"
+                            data-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="sr-only">Previous</span>
+                        </a>
+                        <a class="carousel-control-next" href="#carousel<%= card._id %>" role="button"
+                            data-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="sr-only">Next</span>
+                        </a>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button onclick="deleteCard('<%= card.id %>')">Delete</button>
+                        <button onclick="updateCard('<%= JSON.stringify(card) %>')">Update</button>
+                    </div>
+
+
+                    <div id="update-form"></div>
+                </div>
+                <% }) %>
+                    <% } else { %>
+                        <p>No cards available</p>
+                        <% } %>
+    </section>
+
     <footer>
         <p>Bayazitova Kamila || SE-2206</p>
     </footer>
+
+    <script>
+        async function deleteCard(id) {
+            await fetch('/admin/cards/' + id, { method: 'DELETE' });
+            location.reload()
+        }
+        function updateCard(card) {
+            const cardObj = JSON.parse(card);
+
+            
+
+console.log(cardObj, document.getElementById('descriptionEn'))
+
+            const elem = `
+                    <form action="/admin/cards/${cardObj._id}" method="post">
+                        <h2>UPDATE</h2>
+                        <label for="nameEn">Name (English):</label>
+                        <input type="text" id="nameEn2" value="${cardObj.name.en}" name="nameEn" required><br><br>
+                        <label for="nameOther">Name (Russian):</label>
+                        <input type="text" id="nameOther2" value="${cardObj.name.other}" name="nameOther" required><br><br>
+                        <label for="descriptionEn">Description (English):</label>
+                        <input id="descriptionEn2" name="descriptionEn"  value="${cardObj.description.en}" required><br><br>
+                        <label for="descriptionOther">Description (Russian):</label>
+                        <input id="descriptionOther2" name="descriptionOther"  value="${cardObj.description.other}" required><br><br>
+                        <label for="image1">Image 1 URL:</label>
+                        <input type="text" id="image12"  value="${cardObj.images[0]}" name="image1" required><br><br>
+                        <label for="image2">Image 2 URL:</label>
+                        <input type="text" id="image22" name="image2" value="${cardObj.images[1]}" required><br><br>
+                        <label for="image3">Image 3 URL:</label>
+                        <input type="text" id="image32" name="image3" value="${cardObj.images[2]}" required><br><br>
+                        <button type="submit">Update Card</button>
+                    </form>
+            `
+
+            document.getElementById('update-form').innerHTML = (elem);
+        }
+    </script>
 </body>
 
 </html>

@@ -39,9 +39,9 @@ app.get('/', (req, res) => {
 });
 app.get('/convertion', requireAuth, (req, res) => {
     const defaultData = {
-        from: 'USD',    
-        to: 'EUR',    
-        amount: 100   
+        from: 'USD',
+        to: 'EUR',
+        amount: 100
     };
     res.setHeader('Cache-Control', 'no-store');
     res.render('convertion', { conversionResult: null, ...defaultData });
@@ -84,8 +84,9 @@ app.get('/admin', requireAuth, isAdmin, async (req, res) => {
 
 app.get('/admincards', requireAuth, isAdmin, async (req, res) => {
     try {
+        const cards = await Card.find();
         res.setHeader('Cache-Control', 'no-store');
-        res.render('admincards'); 
+        res.render('admincards', { cards });
     } catch (error) {
         console.error('Error fetching users:', error);
         res.status(500).send('Internal Server Error');
@@ -105,7 +106,7 @@ app.get('/random-user', async (req, res) => {
     }
 });
 
-app.get('/history', requireAuth,  isAdmin,async (req, res) => {
+app.get('/history', requireAuth, isAdmin, async (req, res) => {
     try {
         const history = await History.find().sort({ timestamp: -1 }).limit(10); // Example: Fetch last 10 history records
         res.render('history', { history });
@@ -116,10 +117,10 @@ app.get('/history', requireAuth,  isAdmin,async (req, res) => {
 });
 
 function requireAuth(req, res, next) {
-    if (req.session.username) { 
-        next(); 
+    if (req.session.username) {
+        next();
     } else {
-        res.render('login', { message: 'You need to log in first' }); 
+        res.render('login', { message: 'You need to log in first' });
     }
 }
 
@@ -177,7 +178,7 @@ function generateUserID() {
 
 
 const alphaVantageApiKey = 'W2KWU488AIVMCQFQ';
-app.all('/stock', requireAuth,async (req, res) => {
+app.all('/stock', requireAuth, async (req, res) => {
     const isAuthenticated = req.session.username ? true : false;
     if (req.method === 'GET') {
         res.setHeader('Cache-Control', 'no-store');
@@ -210,7 +211,7 @@ app.all('/stock', requireAuth,async (req, res) => {
 
 
 async function fetchConversionRate(from, to) {
-    const API_KEY = 'e38b207477704e9d980b04dd8d1e2fb4'; 
+    const API_KEY = 'e38b207477704e9d980b04dd8d1e2fb4';
     const apiUrl = `https://open.er-api.com/v6/latest/${from}`;
 
     const response = await axios.get(apiUrl, {
@@ -224,7 +225,7 @@ async function fetchConversionRate(from, to) {
     if (!conversionRate) {
         throw new Error('Conversion rate not available');
     }
-    
+
     return conversionRate;
 }
 
@@ -265,20 +266,20 @@ app.post('/register', async (req, res) => {
         if (existingUser) {
             res.render('success', { message: 'User already exists', link: '/register' });
         }
-        else{
-            
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await User.create({
-            username: username,
-            password: hashedPassword,
-            userID: generateUserID(),
-            isAdmin: username === 'admin'
-        });
-        user.createdAt = new Date();
-        user.updatedAt = new Date();
-        await user.save();
+        else {
 
-        res.render('success', { message: 'Registration successful', link: '/login' });
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const user = await User.create({
+                username: username,
+                password: hashedPassword,
+                userID: generateUserID(),
+                isAdmin: username === 'admin'
+            });
+            user.createdAt = new Date();
+            user.updatedAt = new Date();
+            await user.save();
+
+            res.render('success', { message: 'Registration successful', link: '/login' });
         }
     } catch (error) {
         console.error('Registration error:', error);
@@ -318,79 +319,79 @@ app.post('/login', async (req, res) => {
 
 app.post('/admin/create-user', isAdmin, async (req, res) => {
     const { username, password } = req.body;
-  
+
     try {
         const existingUser = await User.findOne({ username });
         if (existingUser) {
-          return res.status(400).send('Username already exists');
+            return res.status(400).send('Username already exists');
         }
-        else{
+        else {
             const hashedPassword = await bcrypt.hash(password, 10);
 
             const user = await User.create({
-              username: username,
-              password: hashedPassword,
-              userID: generateUserID(), 
-              isAdmin: false 
+                username: username,
+                password: hashedPassword,
+                userID: generateUserID(),
+                isAdmin: false
             });
-              user.createdAt = new Date();
-              user.updatedAt = new Date();
-              await user.save(); 
-          
-              return res.status(404).send('User created successfully');
-              res.render('admin', { message: 'User created successfully' });
+            user.createdAt = new Date();
+            user.updatedAt = new Date();
+            await user.save();
+
+            return res.status(404).send('User created successfully');
+            res.render('admin', { message: 'User created successfully' });
         }
     } catch (error) {
-      console.error('User creation error:', error);
-      res.status(500).send('Internal Server Error');
+        console.error('User creation error:', error);
+        res.status(500).send('Internal Server Error');
     }
-  });
-  
-  
-  app.post('/admin/edit-user', isAdmin, async (req, res) => {
+});
+
+
+app.post('/admin/edit-user', isAdmin, async (req, res) => {
     const { oldUsername, newUsername, newPassword } = req.body;
-  
+
     try {
         const user = await User.findOne({ username: oldUsername });
-    
+
         if (!user) {
-          return res.status(404).send('User not found');
+            return res.status(404).send('User not found');
         }
-        let hashedPassword = user.password; 
+        let hashedPassword = user.password;
         if (newPassword) {
-          hashedPassword = await bcrypt.hash(newPassword, 10);
+            hashedPassword = await bcrypt.hash(newPassword, 10);
         }
-    
-        user.username = newUsername || user.username; 
+
+        user.username = newUsername || user.username;
         user.password = hashedPassword;
-    
+
         await user.save();
         res.status(200).send('User edited successfully');
     } catch (error) {
-      console.error('User edit error:', error);
-      res.status(500).send('Internal Server Error');
+        console.error('User edit error:', error);
+        res.status(500).send('Internal Server Error');
     }
-  });
-  
-  
-  
-  app.post('/admin/delete-user', isAdmin, async (req, res) => {
+});
+
+
+
+app.post('/admin/delete-user', isAdmin, async (req, res) => {
     const { username } = req.body;
-  
+
     console.log('delete', username)
-  
+
     try {
-      const user = await User.findOneAndDelete({ username });
-      if (!user) {
-        return res.status(404).send('User not found');
-      }
-      return res.status(404).send('User deleted successfully');
-      return res.render('admin', { message: 'User deleted successfully' });
+        const user = await User.findOneAndDelete({ username });
+        if (!user) {
+            return res.status(404).send('User not found');
+        }
+        return res.status(404).send('User deleted successfully');
+        return res.render('admin', { message: 'User deleted successfully' });
     } catch (error) {
-      console.error('User deletion error:', error);
-      return res.status(500).send('Internal Server Error');
+        console.error('User deletion error:', error);
+        return res.status(500).send('Internal Server Error');
     }
-  });
+});
 
 // Create a new card
 app.post('/admin/create-card', isAdmin, async (req, res) => {
@@ -406,7 +407,7 @@ app.post('/admin/create-card', isAdmin, async (req, res) => {
             createdAt: new Date(),
             updatedAt: new Date()
         });
-        await card.save(); 
+        await card.save();
         return res.status(404).send('Card created successfully');
     } catch (error) {
         // Handle errors if card creation fails
@@ -415,6 +416,43 @@ app.post('/admin/create-card', isAdmin, async (req, res) => {
     }
 });
 
+
+app.post('/admin/cards/:id', isAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { nameEn, nameOther, descriptionEn, descriptionOther, image1, image2, image3 } = req.body;
+    console.log('===========',req.body);
+    try {
+        const card = await Card.findByIdAndUpdate(id, {
+            name: { en: nameEn, other: nameOther },
+            description: { en: descriptionEn, other: descriptionOther },
+            images: [image1, image2, image3], // Saving URLs directly
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+        if (!card) {
+            return res.status(404).send('Card not found');
+        }
+        res.redirect('/admincards');
+    } catch (error) {
+        console.error('Error fetching card:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+app.delete('/admin/cards/:id', isAdmin, async (req, res) => {
+    const { id } = req.params;
+    const body = req.body;
+    try {
+        const card = await Card.findByIdAndDelete(id);
+        if (!card) {
+            return res.status(404).send('Card not found');
+        }
+        res.json(card);
+    } catch (error) {
+        console.error('Error fetching card:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
 
 app.get('/admin/cards/:id', isAdmin, async (req, res) => {
     const { id } = req.params;
