@@ -150,13 +150,6 @@
 
 <body>
   <div class="container">
-    <nav class="action-links">
-      <a href="/history">View history</a>
-      <p class="separator">|</p>
-      <a href="/admincards">Cards</a>
-      <p class="separator">|</p>
-      <a href="/logout">Log Out</a>
-    </nav>
     <h1>Welcome Admin!</h1>
     <form action="/admin/create-user" method="POST">
       <input type="text" name="username" placeholder="Username" required>
@@ -175,6 +168,13 @@
       <input type="text" name="username" placeholder="Username to delete" required>
       <button type="submit">Delete User</button>
     </form>
+    <nav class="action-links">
+      <a href="/history">View history</a>
+      <p class="separator">|</p>
+      <a href="/admincards">Cards</a>
+      <p class="separator">|</p>
+      <a href="/logout">Log Out</a>
+    </nav>
   </div>
   <div class="table-container">
     <h2>Users:</h2>
