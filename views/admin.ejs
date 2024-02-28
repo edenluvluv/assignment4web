@@ -150,6 +150,13 @@
 
 <body>
   <div class="container">
+    <nav class="action-links">
+      <a href="/history">View history</a>
+      <p class="separator">|</p>
+      <a href="/admincards">Cards</a>
+      <p class="separator">|</p>
+      <a href="/logout">Log Out</a>
+    </nav>
     <h1>Welcome Admin!</h1>
     <form action="/admin/create-user" method="POST">
       <input type="text" name="username" placeholder="Username" required>
